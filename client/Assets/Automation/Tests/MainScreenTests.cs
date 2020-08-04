@@ -14,11 +14,14 @@ namespace TrilleonAutomation
     {
         GameObject sceneseBtn, projectsBtn, packagesBtn;
         GameObject newSceneBtn, saveSceneBtn, closeSceneBtn;
+        GameObject newProjectBtn, saveProjectBtn, closeProjectBtn;
         GameObject inputDialog, confirmationDialog;
         GameObject inputDialogInput;
         GameObject inputDialogOKButton;
         GameObject confirmationDialogOKButton;
+        GameObject newProjectDialogOKButton;
         SceneOptionMenu sceneOptionMenu;
+        NewProjectDialog newProjectDialog;
         GameObject sceneRename, sceneRemove;
         [SetUpClass]
         public IEnumerator SetUpClass()
@@ -33,6 +36,7 @@ namespace TrilleonAutomation
         {
             GameObject buttonsLandscape = Q.driver.Find(By.Name, "ButtonsLandscape");
             GameObject scenesList = Q.driver.Find(By.Name, "ScenesList");
+            GameObject projectsList = Q.driver.Find(By.Name, "ProjectsList");
             GameObject mainScreen = Q.driver.Find(By.Name, "MainScreen");
 
             sceneseBtn = Q.driver.FindIn(buttonsLandscape, By.Name, "ScenesButton");
@@ -42,7 +46,11 @@ namespace TrilleonAutomation
             saveSceneBtn = Q.driver.Find(By.Name, "SaveScene");
             closeSceneBtn = Q.driver.Find(By.Name, "CloseScene");
 
+            saveProjectBtn = Q.driver.Find(By.Name, "SaveProject");
+            closeProjectBtn = Q.driver.Find(By.Name, "CloseProject");
+
             newSceneBtn = Q.driver.FindIn(scenesList, By.Name, "TileNew(Clone)");
+            newProjectBtn = Q.driver.FindIn(projectsList, By.Name, "TileNew(Clone)");
 
             inputDialog = Q.driver.FindIn(mainScreen, By.Name, "InputDialog");
 
@@ -56,6 +64,8 @@ namespace TrilleonAutomation
             confirmationDialog = sceneOptionMenu.confirmationDialog.gameObject;
             confirmationDialogOKButton = Q.driver.FindIn(confirmationDialog, By.Name, "Ok");
 
+            newProjectDialog = Q.driver.Find(By.Name, "NewProjectDialog").GetComponent<NewProjectDialog>();
+            newProjectDialogOKButton = Q.driver.FindIn(newProjectDialog.gameObject, By.Name, "Got It");
             yield return null;
         }
         [DependencyTest(1)]
@@ -96,9 +106,31 @@ namespace TrilleonAutomation
             yield return StartCoroutine(Q.assert.IsTrue(sceneExist, "Test scene does not exist"));
             
         }
+
         [DependencyTest(3)]
         [Automation("Main screen tests")]
+        public  IEnumerator UserCanCreateAndSaveProjectTest() {
+            yield return StartCoroutine(Q.driver.Click(projectsBtn, "Click on projects."));
+            yield return StartCoroutine(Q.driver.Click(newProjectBtn, "Click on new project button"));
+            newProjectDialog.NewProjectName.text = "test project";
+            yield return StartCoroutine(Q.driver.Click(newProjectDialogOKButton, "Click on Got it button"));
+            // not working.. solve better
+            _ = WebsocketManager.Instance.AddActionPoint("asdf", null, new IO.Swagger.Model.Position());
+            yield return new WaitForSeconds(2);
+            yield return StartCoroutine(Q.driver.Click(saveProjectBtn, "Click on save project button"));
+            yield return StartCoroutine(Q.driver.Click(closeProjectBtn, "Click on close project button"));
+            bool projectExists = false;
+            foreach (IO.Swagger.Model.ListProjectsResponseData project in Base.GameManager.Instance.Projects) {
+                if (project.Name == "test project")
+                    projectExists = true;
+            }
+            yield return StartCoroutine(Q.assert.IsTrue(projectExists, "Test project does not exist"));
+        }
+
+        [DependencyTest(4)]
+        [Automation("Main screen tests")]
         public IEnumerator UserCanRenameSceneTest() {
+            yield return StartCoroutine(Q.driver.Click(sceneseBtn, "Click on scenes."));
             SceneTile sceneTile = MainScreen.Instance.GetSceneTile("test scene");
             yield return StartCoroutine(Q.assert.IsTrue(sceneTile != null, "Scene not found!"));
             yield return StartCoroutine(Q.driver.Click(sceneTile.GetOptionButton().gameObject, "Click on option menu."));
@@ -117,7 +149,9 @@ namespace TrilleonAutomation
             }
             yield return StartCoroutine(Q.assert.IsTrue(sceneExist, "Test scene does not exist"));
         }
-        [DependencyTest(4)]
+
+        // cant remove when there is project.. so check that it cannot be removed instead, then remove project, then remove scene
+        [DependencyTest(5)]
         [Automation("Main screen tests")]
         public IEnumerator UserCanRemoveSceneTest() {
             SceneTile sceneTile = MainScreen.Instance.GetSceneTile("test scene renamed");
@@ -141,6 +175,8 @@ namespace TrilleonAutomation
             }
             yield return StartCoroutine(Q.assert.IsTrue(!sceneExist, "Test scene should not exist"));
         }
+
+       
 
 
         [TearDown]
