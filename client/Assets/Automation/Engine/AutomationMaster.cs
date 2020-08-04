@@ -3359,7 +3359,8 @@ namespace TrilleonAutomation {
 			List<Type> typesAll = new List<Type>();
 			List<Assembly> assembliesAll = AppDomain.CurrentDomain.GetAssemblies().ToList();
 			for(int x = 0; x < assembliesAll.Count; x++) {
-				
+                if (assembliesAll[x].FullName == "RosBridgeClient, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null")
+                    continue;
 				typesAll.AddRange(assembliesAll[x].GetTypes());
 
 			}

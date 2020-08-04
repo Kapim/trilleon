@@ -1,4 +1,4 @@
-﻿/* 
+/* 
 +   This file is part of Trilleon.  Trilleon is a client automation framework.
 +  
 +   Copyright (C) 2017 Disruptor Beam
@@ -374,8 +374,10 @@ namespace TrilleonAutomation {
 			List<Type> popTypes = new List<Type>();
 			List<Assembly> assembliesAll = AppDomain.CurrentDomain.GetAssemblies().ToList();
 			for(int x = 0; x < assembliesAll.Count; x++) {
+                if (assembliesAll[x].FullName == "RosBridgeClient, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null")
+                    continue;
 
-				popTypes.AddRange(assembliesAll[x].GetTypes().ToList().FindAll(m => m.IsClass && m.GetInterface("SwatPopup") != null));
+                popTypes.AddRange(assembliesAll[x].GetTypes().ToList().FindAll(m => m.IsClass && m.GetInterface("SwatPopup") != null));
 
 			}
 			for(int pt = 0; pt < popTypes.Count; pt++) {
